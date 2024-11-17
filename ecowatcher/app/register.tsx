@@ -5,6 +5,7 @@ import { auth, db } from '../firebaseConfig'; // Pastikan firebaseConfig sudah d
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { collection, addDoc } from 'firebase/firestore'; // Import Firestore
 import { doc, setDoc } from 'firebase/firestore'; // Tambahkan setDoc di sini
+import * as Crypto from 'expo-crypto';
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState('');
@@ -23,8 +24,12 @@ const RegisterScreen = () => {
     }
 
     try {
+       const digest = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        password
+      );
       // Mendaftar pengguna dengan Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, digest);
 
       // Menyimpan data pengguna ke Firestore setelah registrasi sukses
       await setDoc(doc(db, 'users', userCredential.user.uid), {
@@ -35,7 +40,7 @@ const RegisterScreen = () => {
         noRekening,
         level: 'penyumbang', // Level otomatis diatur ke "penyumbang"
         point: 0, // Set default point ke 0
-        password, // Simpan password (harap pertimbangkan hashing password)
+        password : digest, // Simpan password (harap pertimbangkan hashing password)
       });
 
       Alert.alert('Registrasi berhasil!');

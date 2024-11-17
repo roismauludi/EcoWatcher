@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { auth, db } from '../firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../firebaseConfig';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import * as Crypto from 'expo-crypto';
 
 // Definisikan tipe untuk stack parameter list
 type RootStackParamList = {
@@ -20,7 +20,7 @@ type Props = {
   navigation: LoginScreenNavigationProp;
 };
 
-export default function LoginScreen({ navigation }) {
+export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,32 +33,55 @@ export default function LoginScreen({ navigation }) {
 
     setIsLoading(true);
     try {
-      // Autentikasi pengguna
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      console.log('Login berhasil, UID:', userCredential.user.uid);
-      
-      // Cek level pengguna di Firestore
-      const userDoc = await getDoc(doc(db, 'users', userCredential.user.uid));
+      // Hash password terlebih dahulu
+      const hashedPassword = await Crypto.digestStringAsync(
+        Crypto.CryptoDigestAlgorithm.SHA256,
+        password
+      );
+
+      // Cari user berdasarkan email di Firestore
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', email));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert('Error', 'Email tidak ditemukan');
+        setIsLoading(false);
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
+
+      // Bandingkan password yang di-hash
+      if (userData.password !== hashedPassword) {
+        Alert.alert('Error', 'Password salah');
+        setIsLoading(false);
+        return;
+      }
+
+      // Login berhasil
+      console.log('Login berhasil, UserID:', userDoc.id);
       
       // Tambahkan log untuk debugging
       console.log('User Data:', userData);
       console.log('User Level:', userData?.level);
-      
+
       if (!userData) {
         Alert.alert('Error', 'Data pengguna tidak ditemukan');
+        setIsLoading(false);
         return;
       }
 
       // Validasi level pengguna
-      console.log('Checking role:', userData.role);
+      console.log('Checking role:', userData.level);
       console.log('Is penyumbang?', userData.level === 'penyumbang');
       console.log('Is pengelola?', userData.level === 'pengelola');
 
       if (userData.level !== 'penyumbang' && userData.level !== 'pengelola') {
         console.log('Role tidak valid:', userData.level);
         Alert.alert('Akses Ditolak', 'Anda tidak memiliki akses ke aplikasi ini');
-        await auth.signOut();
+        setIsLoading(false);
         return;
       }
 
@@ -72,7 +95,7 @@ export default function LoginScreen({ navigation }) {
           break;
         default:
           Alert.alert('Error', 'Level pengguna tidak valid');
-          await auth.signOut();
+          setIsLoading(false);
       }
     } catch (error) {
       console.error('Login Error:', error);
@@ -85,7 +108,7 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text>Email</Text>
+      <Text style={styles.label}>Email</Text>
       <TextInput 
         value={email} 
         onChangeText={setEmail} 
@@ -95,7 +118,7 @@ export default function LoginScreen({ navigation }) {
         style={styles.input}
       />
       
-      <Text>Password</Text>
+      <Text style={styles.label}>Password</Text>
       <TextInput 
         value={password} 
         onChangeText={setPassword} 
@@ -104,16 +127,21 @@ export default function LoginScreen({ navigation }) {
         style={styles.input}
       />
       
-      <Button 
-        title={isLoading ? "Memuat..." : "Login"} 
-        onPress={handleLogin}
-        disabled={isLoading}
-      />
-      <Button 
-        title="Register" 
-        onPress={() => navigation.navigate('Register')}
-        disabled={isLoading}
-      />
+      <View style={styles.buttonContainer}>
+        <Button 
+          title={isLoading ? "Memuat..." : "Login"} 
+          onPress={handleLogin}
+          disabled={isLoading}
+        />
+      </View>
+      
+      <View style={styles.buttonContainer}>
+        <Button 
+          title="Register" 
+          onPress={() => navigation.navigate('Register')}
+          disabled={isLoading}
+        />
+      </View>
     </View>
   );
 }
@@ -123,12 +151,23 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 5,
+    color: '#333',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 10,
+    padding: 12,
     marginBottom: 20,
-    borderRadius: 5,
+    borderRadius: 8,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+  },
+  buttonContainer: {
+    marginBottom: 10,
   }
 });
