@@ -1,24 +1,142 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+// ecowatcher/app/screens/ProfileScreen.tsx
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+// Definisikan tipe untuk routes
+type RootStackParamList = {
+  Login: undefined;
+  MainTabs: undefined;
+  Profile: undefined;
+  Register: undefined;
+  AdminDashboard: undefined;
+};
+
+// Definisikan tipe untuk navigation
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+// Definisikan interface untuk userData
+interface UserData {
+  nama: string;
+  email: string;
+  noRekening: string;
+  namaRekening: string;
+  jenisBank: string;
+  level: string;
+  foto: any; // Ubah tipe foto menjadi any untuk mendukung require
+}
 
 const ProfileScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
+  const [userData, setUserData] = useState<UserData>({
+    nama: '',
+    email: '',
+    noRekening: '',
+    namaRekening: '',
+    jenisBank: '',
+    level: '',
+    foto: require('../../assets/images/default.jpg'), // Foto default
+  });
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const userEmail = await AsyncStorage.getItem('userEmail');
+      console.log('Fetching data for email:', userEmail); // Debugging
+
+      if (!userEmail) {
+        Alert.alert('Error', 'Sesi pengguna tidak ditemukan');
+        navigation.replace('Login');
+        return;
+      }
+
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', userEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const data = userDoc.data() as UserData;
+        console.log('User data fetched:', data); // Debugging
+        setUserData({
+          nama: data.nama || '',
+          email: data.email || '',
+          noRekening: data.noRekening || '',
+          namaRekening: data.namaRekening || '',
+          jenisBank: data.jenisBank || '',
+          level: data.level || '',
+          foto: data.foto || require('../../assets/images/default.jpg'), // Gunakan foto default jika tidak ada
+        });
+      } else {
+        console.log('No user data found'); // Debugging
+        Alert.alert('Error', 'Data pengguna tidak ditemukan');
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      Alert.alert('Error', 'Gagal mengambil data pengguna');
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await AsyncStorage.clear();
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Login' as keyof RootStackParamList }],
+      });
+    } catch (error) {
+      console.error('Error during logout:', error);
+      Alert.alert('Error', 'Gagal keluar dari aplikasi');
+    }
+  };
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container}>
       {/* Header dengan gambar profil dan info pengguna */}
       <LinearGradient colors={["#2ECC71", "#27AE60"]} style={styles.header}>
         <View style={styles.profileContainer}>
-          {/* Gambar profil */}
-          <Image
-            source={{ uri: "https://placekitten.com/200/200" }} // Placeholder gambar profil
+        <Image
+
+            source={{ uri: "https://via.placeholder.com/100" }}
             style={styles.profileImage}
           />
-          {/* Nama dan nomor telepon */}
-          <Text style={styles.profileName}>Bagas Kebab</Text>
-          <Text style={styles.profilePhone}>0899-3415-875</Text>
+          
+          <Image
+            source={typeof userData.foto === 'string' ? { uri: userData.foto } : userData.foto} // Menggunakan foto dari data pengguna
+            style={styles.profileImage}
+            onError={() => setUserData((prev) => ({ ...prev, foto: require('../../assets/images/default.jpg') }))} // Jika ada error, gunakan foto default
+          />
+          <Text style={styles.profileName}>{userData.nama}</Text>
+          <Text style={styles.profileEmail}>{userData.email}</Text>
+          <Text style={styles.profileLevel}>{userData.level}</Text>
         </View>
       </LinearGradient>
+
+      {/* Info Rekening */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Informasi Rekening</Text>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Bank:</Text>
+          <Text style={styles.infoValue}>{userData.jenisBank}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>Nama Rekening:</Text>
+          <Text style={styles.infoValue}>{userData.namaRekening}</Text>
+        </View>
+        <View style={styles.infoItem}>
+          <Text style={styles.infoLabel}>No. Rekening:</Text>
+          <Text style={styles.infoValue}>{userData.noRekening}</Text>
+        </View>
+      </View>
 
       {/* Pengaturan Aplikasi */}
       <View style={styles.sectionContainer}>
@@ -51,13 +169,13 @@ const ProfileScreen = () => {
       </View>
 
       {/* Tombol Keluar */}
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutText}>Keluar</Text>
       </TouchableOpacity>
 
       {/* Versi Aplikasi */}
       <Text style={styles.versionText}>Versi Aplikasi 1.0.0</Text>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -75,6 +193,7 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     alignItems: "center",
+    position: 'relative', // Tambahkan ini untuk mengatur posisi relatif
   },
   profileImage: {
     width: 80,
@@ -82,23 +201,45 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 3,
     borderColor: "white",
+    position: 'absolute', // Tambahkan ini untuk mengatur posisi absolut
+    top: 20, // Atur posisi vertikal sesuai kebutuhan
+    zIndex: 1, // Pastikan gambar berada di atas
   },
   profileName: {
     color: "white",
     fontSize: 20,
     fontWeight: "bold",
-    marginTop: 10,
+    marginTop: 100, // Sesuaikan margin untuk menghindari tumpang tindih
   },
-  profilePhone: {
+  profileEmail: {
     color: "white",
-    fontSize: 16,
+    fontSize: 14,
+    marginTop: 5,
+  },
+  profileLevel: {
+    color: "white",
+    fontSize: 14,
+    marginTop: 5,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
   },
   sectionContainer: {
     backgroundColor: "white",
+    marginHorizontal: 15,
     marginVertical: 10,
     paddingHorizontal: 20,
     paddingVertical: 15,
     borderRadius: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   sectionTitle: {
     fontSize: 16,
@@ -118,13 +259,28 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#333",
   },
+  infoItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEE',
+  },
+  infoLabel: {
+    fontSize: 16,
+    color: '#666',
+  },
+  infoValue: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
   logoutButton: {
-    backgroundColor: "#2ECC71",
-    marginHorizontal: 20,
-    marginVertical: 20,
-    borderRadius: 30,
+    backgroundColor: "#E74C3C",
+    marginHorizontal: 15,
+    marginTop: 15,
     paddingVertical: 15,
-    justifyContent: "center",
+    borderRadius: 10,
     alignItems: "center",
   },
   logoutText: {
@@ -135,7 +291,8 @@ const styles = StyleSheet.create({
   versionText: {
     textAlign: "center",
     color: "#888",
-    fontSize: 14,
+    marginVertical: 15,
+    fontSize: 12,
   },
 });
 

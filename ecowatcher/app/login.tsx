@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebaseConfig';
+import { db } from '../firebaseConfig'; // Pastikan Anda mengimpor db untuk Firestore
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as Crypto from 'expo-crypto';
 
-// Definisikan tipe untuk stack parameter list
+// Definisikan tipe untuk routes
 type RootStackParamList = {
   Login: undefined;
   Register: undefined;
@@ -13,14 +23,11 @@ type RootStackParamList = {
   AdminDashboard: undefined;
 };
 
-// Definisikan tipe untuk navigation prop
-type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+// Definisikan tipe untuk navigation
+type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
-type Props = {
-  navigation: LoginScreenNavigationProp;
-};
-
-export default function LoginScreen({ navigation }: Props) {
+const LoginScreen = () => {
+  const navigation = useNavigation<NavigationProp>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -33,59 +40,42 @@ export default function LoginScreen({ navigation }: Props) {
 
     setIsLoading(true);
     try {
-      // Hash password terlebih dahulu
+      // Hash password
       const hashedPassword = await Crypto.digestStringAsync(
         Crypto.CryptoDigestAlgorithm.SHA256,
         password
       );
 
-      // Cari user berdasarkan email di Firestore
-      const usersRef = collection(db, 'users');
+      // Cari user berdasarkan email
+      const usersRef = collection(db, 'users'); // Gunakan db untuk Firestore
       const q = query(usersRef, where('email', '==', email));
       const querySnapshot = await getDocs(q);
 
       if (querySnapshot.empty) {
         Alert.alert('Error', 'Email tidak ditemukan');
-        setIsLoading(false);
         return;
       }
 
       const userDoc = querySnapshot.docs[0];
       const userData = userDoc.data();
 
-      // Bandingkan password yang di-hash
+      // Verifikasi password
       if (userData.password !== hashedPassword) {
         Alert.alert('Error', 'Password salah');
-        setIsLoading(false);
         return;
       }
 
-      // Login berhasil
-      console.log('Login berhasil, UserID:', userDoc.id);
-      
-      // Tambahkan log untuk debugging
-      console.log('User Data:', userData);
-      console.log('User Level:', userData?.level);
-
-      if (!userData) {
-        Alert.alert('Error', 'Data pengguna tidak ditemukan');
-        setIsLoading(false);
-        return;
-      }
+      // Simpan email ke AsyncStorage
+      await AsyncStorage.setItem('userEmail', email);
+      console.log('Email tersimpan:', email);
 
       // Validasi level pengguna
-      console.log('Checking role:', userData.level);
-      console.log('Is penyumbang?', userData.level === 'penyumbang');
-      console.log('Is pengelola?', userData.level === 'pengelola');
-
       if (userData.level !== 'penyumbang' && userData.level !== 'pengelola') {
-        console.log('Role tidak valid:', userData.level);
         Alert.alert('Akses Ditolak', 'Anda tidak memiliki akses ke aplikasi ini');
-        setIsLoading(false);
         return;
       }
 
-      // Arahkan ke halaman yang sesuai berdasarkan level
+      // Arahkan ke halaman yang sesuai
       switch (userData.level) {
         case 'pengelola':
           navigation.replace('AdminDashboard');
@@ -95,12 +85,10 @@ export default function LoginScreen({ navigation }: Props) {
           break;
         default:
           Alert.alert('Error', 'Level pengguna tidak valid');
-          setIsLoading(false);
       }
     } catch (error) {
       console.error('Login Error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak diketahui';
-      Alert.alert('Error', errorMessage);
+      Alert.alert('Error', 'Terjadi kesalahan saat login');
     } finally {
       setIsLoading(false);
     }
@@ -108,43 +96,49 @@ export default function LoginScreen({ navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Email</Text>
-      <TextInput 
-        value={email} 
-        onChangeText={setEmail} 
-        placeholder="Masukkan email"
+      <Text style={styles.title}>EcoWatcher</Text>
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Email"
+        value={email}
+        onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
-        style={styles.input}
       />
       
-      <Text style={styles.label}>Password</Text>
-      <TextInput 
-        value={password} 
-        onChangeText={setPassword} 
-        placeholder="Masukkan password" 
+      <TextInput
+        style={styles.input}
+        placeholder="Password"
+        value={password}
+        onChangeText={setPassword}
         secureTextEntry
-        style={styles.input}
       />
       
-      <View style={styles.buttonContainer}>
-        <Button 
-          title={isLoading ? "Memuat..." : "Login"} 
-          onPress={handleLogin}
-          disabled={isLoading}
-        />
-      </View>
+      <TouchableOpacity 
+        style={styles.loginButton}
+        onPress={handleLogin}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.loginButtonText}>Masuk</Text>
+        )}
+      </TouchableOpacity>
       
-      <View style={styles.buttonContainer}>
-        <Button 
-          title="Register" 
-          onPress={() => navigation.navigate('Register')}
-          disabled={isLoading}
-        />
-      </View>
+      <TouchableOpacity 
+        style={styles.registerButton}
+        onPress={() => navigation.navigate('Register')}
+        disabled={isLoading}
+      >
+        <Text style={styles.registerButtonText}>
+          Belum punya akun? Daftar disini
+        </Text>
+      </TouchableOpacity>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -153,21 +147,40 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#fff',
   },
-  label: {
-    fontSize: 16,
-    marginBottom: 5,
-    color: '#333',
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 30,
+    textAlign: 'center',
   },
   input: {
     borderWidth: 1,
     borderColor: '#ddd',
-    padding: 12,
-    marginBottom: 20,
+    padding: 15,
+    marginBottom: 15,
     borderRadius: 8,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
   },
-  buttonContainer: {
-    marginBottom: 10,
-  }
+  loginButton: {
+    backgroundColor: '#2ECC71',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  loginButtonText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  registerButton: {
+    marginTop: 20,
+  },
+  registerButtonText: {
+    color: '#2ECC71',
+    textAlign: 'center',
+    fontSize: 16,
+  },
 });
+
+export default LoginScreen;

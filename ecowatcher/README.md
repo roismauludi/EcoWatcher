@@ -8,6 +8,8 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
 
    ```bash
    npm install
+   npm install firebase
+   npx expo install expo-crypto
    ```
 
 2. Start the app
