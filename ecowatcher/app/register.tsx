@@ -40,6 +40,8 @@ const RegisterScreen = () => {
         noRekening,
         level: 'penyumbang',
         point: 0,
+        totalpointmasuk: 0,
+        totalpointkeluar: 0,
         password: digest,
         foto: require('../assets/images/default.jpg'),
       });

@@ -81,6 +81,7 @@ const LoginScreen = () => {
           navigation.replace('AdminDashboard');
           break;
         case 'penyumbang':
+          console.log('Navigating to MainTabs...');
           navigation.replace('MainTabs');
           break;
         default:

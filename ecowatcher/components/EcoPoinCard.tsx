@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { LinearGradient } from "expo-linear-gradient"; // Import for gradient effect
-import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons"; // Import MaterialIcons for button icon
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "../firebaseConfig"; // Pastikan file firebaseConfig sudah dikonfigurasi dengan benar
-import AsyncStorage from "@react-native-async-storage/async-storage"; // Untuk mengambil email pengguna yang login
+import { LinearGradient } from "expo-linear-gradient";
+import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { collection, query, where, onSnapshot } from "firebase/firestore"; // onSnapshot digunakan untuk real-time updates
+import { db } from "../firebaseConfig"; 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const EcoPoinCard = () => {
   const [poinAktif, setPoinAktif] = useState<number>(0);
@@ -12,25 +12,27 @@ const EcoPoinCard = () => {
   const [totalPoinKeluar, setTotalPoinKeluar] = useState<number>(0);
 
   useEffect(() => {
+    // Mendapatkan email pengguna dari AsyncStorage
     const fetchPoinData = async () => {
-      try {
-        const userEmail = await AsyncStorage.getItem("userEmail");
-        if (userEmail) {
-          const usersRef = collection(db, "users");
-          const q = query(usersRef, where("email", "==", userEmail));
-          const querySnapshot = await getDocs(q);
+      const userEmail = await AsyncStorage.getItem("userEmail");
+      if (userEmail) {
+        const usersRef = collection(db, "users");
+        const q = query(usersRef, where("email", "==", userEmail));
 
+        // Gunakan onSnapshot untuk mendengarkan perubahan real-time pada data pengguna
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
           if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
             const data = userDoc.data();
-            // Menyimpan data poin yang diambil dari Firestore
+            // Memperbarui state dengan data terbaru dari Firestore
             setPoinAktif(data.point || 0); // Poin aktif
             setTotalPoinMasuk(data.totalpointmasuk || 0); // Total poin masuk
             setTotalPoinKeluar(data.totalpointkeluar || 0); // Total poin keluar
           }
-        }
-      } catch (error) {
-        console.error("Error fetching user data:", error);
+        });
+
+        // Membersihkan listener ketika komponen dibersihkan
+        return () => unsubscribe();
       }
     };
 
@@ -39,7 +41,7 @@ const EcoPoinCard = () => {
 
   return (
     <LinearGradient
-      colors={["#2ECC71", "#27AE60"]} // Warna gradient yang lebih lembut
+      colors={["#2ECC71", "#27AE60"]}
       style={styles.cardContainer}
     >
       <View style={styles.cardContent}>
@@ -85,17 +87,17 @@ const EcoPoinCard = () => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    borderRadius: 20, // Sedikit lebih besar untuk tampilan yang lebih lembut
-    padding: 20, // Lebih banyak padding untuk memberi lebih banyak ruang
+    borderRadius: 20,
+    padding: 20,
     marginVertical: 15,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 4, // Lebih besar untuk bayangan yang lebih jelas
+      height: 4,
     },
-    shadowOpacity: 0.3, // Lebih jelas bayangannya
+    shadowOpacity: 0.3,
     shadowRadius: 6,
-    elevation: 8, // Lebih tinggi untuk efek bayangan yang lebih kuat
+    elevation: 8,
   },
   cardContent: {
     backgroundColor: "transparent",
@@ -103,29 +105,29 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 12, // Memberikan lebih banyak ruang antara icon dan judul
+    marginBottom: 12,
   },
   cardTitle: {
     color: "white",
-    fontSize: 22, // Ukuran font yang lebih besar
+    fontSize: 22,
     fontWeight: "bold",
-    marginLeft: 12, // Sedikit lebih banyak ruang antara icon dan teks
+    marginLeft: 12,
   },
   poinText: {
     color: "white",
-    fontSize: 16, // Ukuran teks poin aktif sedikit lebih besar
-    marginTop: 8, // Memberikan sedikit ruang sebelum nilai poin
+    fontSize: 16,
+    marginTop: 8,
   },
   poinValue: {
     color: "white",
-    fontSize: 32, // Lebih besar untuk membuat angka lebih menonjol
+    fontSize: 32,
     fontWeight: "bold",
   },
   exchangeButton: {
     marginTop: 12,
-    backgroundColor: "#5EDB7E", // Hijau lembut sesuai desain
-    borderRadius: 20, // Border yang lebih bulat sesuai desain
-    flexDirection: "row", // Agar teks dan icon dalam satu baris
+    backgroundColor: "#5EDB7E",
+    borderRadius: 20,
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 12,
@@ -137,23 +139,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonIcon: {
-    marginRight: 10, // Jarak antara icon dan teks
+    marginRight: 10,
   },
   poinDetails: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 25, // Memberikan lebih banyak ruang sebelum detail poin
+    marginTop: 25,
   },
   poinItem: {
     alignItems: "center",
   },
   poinLabel: {
     color: "white",
-    fontSize: 14, // Sedikit lebih besar untuk teks label
+    fontSize: 14,
   },
   poinValueSmall: {
     color: "white",
-    fontSize: 18, // Lebih besar agar angka lebih menonjol
+    fontSize: 18,
     fontWeight: "bold",
   },
 });
