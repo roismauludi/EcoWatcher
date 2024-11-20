@@ -4,5 +4,6 @@ export type RootStackParamList = {
   DropPoint: undefined;
   PickUp: undefined;
   Education: undefined;
+  Login: undefined;
   // Tambahkan rute lain jika diperlukan
 };

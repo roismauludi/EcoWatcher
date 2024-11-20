@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   ScrollView,
   View,
@@ -7,12 +7,16 @@ import {
   Image,
   StatusBar,
   Dimensions,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { RootStackParamList } from "../types";
-import EcoPoinCard from "@/components/EcoPoinCard";
-import ActionSection from "@/components/ActionSection";
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../firebaseConfig';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import EcoPoinCard from "../../components/EcoPoinCard";
+import ActionSection from "../../components/ActionSection";
 
 const { width } = Dimensions.get("window");
 
@@ -21,8 +25,50 @@ type DashboardScreenNavigationProp = StackNavigationProp<
   "Dashboard"
 >;
 
-export default function Dashboard() {
+interface UserData {
+  nama: string;
+  foto: any; // Bisa berupa URL string atau require() untuk gambar default
+}
+
+function Dashboard() {
   const navigation = useNavigation<DashboardScreenNavigationProp>();
+  const [userData, setUserData] = useState<UserData>({
+    nama: 'Pengguna',
+    foto: require('../../assets/images/default.jpg'), // Foto default
+  });
+
+  useEffect(() => {
+    fetchUserData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const userEmail = await AsyncStorage.getItem('userEmail');
+      if (!userEmail) {
+        Alert.alert('Error', 'Sesi pengguna tidak ditemukan');
+        navigation.replace('Login');
+        return;
+      }
+
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('email', '==', userEmail));
+      const querySnapshot = await getDocs(q);
+
+      if (!querySnapshot.empty) {
+        const userDoc = querySnapshot.docs[0];
+        const data = userDoc.data() as UserData;
+        setUserData({
+          nama: data.nama || 'Pengguna',
+          foto: data.foto || require('../../assets/images/default.jpg'),
+        });
+      } else {
+        Alert.alert('Error', 'Data pengguna tidak ditemukan');
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      Alert.alert('Error', 'Gagal mengambil data pengguna');
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -32,12 +78,12 @@ export default function Dashboard() {
       <View style={styles.header}>
         <View style={styles.profileContainer}>
           <Image
-            source={{ uri: "https://via.placeholder.com/100" }}
+            source={typeof userData.foto === 'string' ? { uri: userData.foto } : userData.foto}
             style={styles.profileImage}
           />
           <View style={styles.userInfo}>
             <Text style={styles.welcomeText}>Selamat Datang</Text>
-            <Text style={styles.username}>Pengguna</Text>
+            <Text style={styles.username}>{userData.nama}</Text>
           </View>
         </View>
       </View>
@@ -55,33 +101,7 @@ export default function Dashboard() {
       {/* Blog Section */}
       <View style={styles.blogSection}>
         <Text style={styles.blogSectionTitle}>Artikel Terbaru</Text>
-        <View style={styles.blogItem}>
-          <Image
-            style={styles.blogImage}
-            source={{ uri: "https://via.placeholder.com/150" }}
-          />
-          <View style={styles.blogTextContainer}>
-            <Text style={styles.blogCategory}>Blog & Artikel</Text>
-            <Text style={styles.blogTitle}>
-              EcoGreen: Solusi Tukar Sampah Jadi Berkah
-            </Text>
-            <Text style={styles.blogDate}>25 Juli 2022</Text>
-          </View>
-        </View>
-
-        <View style={styles.blogItem}>
-          <Image
-            style={styles.blogImage}
-            source={{ uri: "https://via.placeholder.com/150" }}
-          />
-          <View style={styles.blogTextContainer}>
-            <Text style={styles.blogCategory}>Blog & Artikel</Text>
-            <Text style={styles.blogTitle}>
-              Raih Kekayaan Hanya Dengan Tutup Botol
-            </Text>
-            <Text style={styles.blogDate}>27 Juli 2022</Text>
-          </View>
-        </View>
+        {/* Konten blog lainnya */}
       </View>
     </ScrollView>
   );
@@ -126,55 +146,22 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
   },
+  userPoint: {
+    color: "#fff",
+    fontSize: 16,
+  },
   actions: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    paddingHorizontal: 10,
-  },
-  xpProgress: {
-    backgroundColor: "#FFF8DC",
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    marginHorizontal: 20,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  xpText: {
-    fontSize: 14,
-    fontWeight: "500",
+    marginTop: 20,
   },
   blogSection: {
-    padding: 20,
+    marginTop: 20,
+    paddingHorizontal: 10,
   },
   blogSectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
     marginBottom: 10,
   },
-  blogItem: {
-    flexDirection: "row",
-    marginBottom: 15,
-  },
-  blogImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
-    marginRight: 10,
-  },
-  blogTextContainer: {
-    flex: 1,
-  },
-  blogCategory: {
-    fontSize: 12,
-    color: "#888",
-  },
-  blogTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  blogDate: {
-    fontSize: 12,
-    color: "#888",
-  },
 });
+
+export default Dashboard; // Hanya ada satu ekspor default

@@ -1,9 +1,42 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { LinearGradient } from "expo-linear-gradient"; // Import for gradient effect
 import { FontAwesome5, Ionicons, MaterialIcons } from "@expo/vector-icons"; // Import MaterialIcons for button icon
+import { collection, query, where, getDocs } from "firebase/firestore";
+import { db } from "../firebaseConfig"; // Pastikan file firebaseConfig sudah dikonfigurasi dengan benar
+import AsyncStorage from "@react-native-async-storage/async-storage"; // Untuk mengambil email pengguna yang login
 
 const EcoPoinCard = () => {
+  const [poinAktif, setPoinAktif] = useState<number>(0);
+  const [totalPoinMasuk, setTotalPoinMasuk] = useState<number>(0);
+  const [totalPoinKeluar, setTotalPoinKeluar] = useState<number>(0);
+
+  useEffect(() => {
+    const fetchPoinData = async () => {
+      try {
+        const userEmail = await AsyncStorage.getItem("userEmail");
+        if (userEmail) {
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("email", "==", userEmail));
+          const querySnapshot = await getDocs(q);
+
+          if (!querySnapshot.empty) {
+            const userDoc = querySnapshot.docs[0];
+            const data = userDoc.data();
+            // Menyimpan data poin yang diambil dari Firestore
+            setPoinAktif(data.point || 0); // Poin aktif
+            setTotalPoinMasuk(data.totalpointmasuk || 0); // Total poin masuk
+            setTotalPoinKeluar(data.totalpointkeluar || 0); // Total poin keluar
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchPoinData();
+  }, []); // Menjalankan sekali saat komponen dimuat
+
   return (
     <LinearGradient
       colors={["#2ECC71", "#27AE60"]} // Warna gradient yang lebih lembut
@@ -15,7 +48,7 @@ const EcoPoinCard = () => {
           <Text style={styles.cardTitle}>EcoPoin</Text>
         </View>
         <Text style={styles.poinText}>Poin Aktif</Text>
-        <Text style={styles.poinValue}>16500 Poin</Text>
+        <Text style={styles.poinValue}>{poinAktif} Poin</Text>
 
         {/* Button Tukar Poin with Icon */}
         <TouchableOpacity style={styles.exchangeButton}>
@@ -36,13 +69,13 @@ const EcoPoinCard = () => {
               color="white"
             />
             <Text style={styles.poinLabel}>Total Poin Masuk</Text>
-            <Text style={styles.poinValueSmall}>26600 Poin</Text>
+            <Text style={styles.poinValueSmall}>{totalPoinMasuk} Poin</Text>
           </View>
 
           <View style={styles.poinItem}>
             <Ionicons name="arrow-up-circle-outline" size={20} color="white" />
             <Text style={styles.poinLabel}>Total Poin Keluar</Text>
-            <Text style={styles.poinValueSmall}>10100 Poin</Text>
+            <Text style={styles.poinValueSmall}>{totalPoinKeluar} Poin</Text>
           </View>
         </View>
       </View>
