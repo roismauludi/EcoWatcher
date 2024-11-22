@@ -15,6 +15,7 @@ import CatalogScreen from "../screens/CatalogScreen"; // Import CatalogScreen
 import PickUpScreen from "../screens/PickUpScreen";
 import DropPointScreen from "../screens/DropPointScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import TukarPointScreen from "../screens/TukarPointScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -33,6 +34,7 @@ function BottomTabs() {
                 size={size}
                 color={color}
               />
+              
             );
           } else if (route.name === "Tong") {
             return (
@@ -106,6 +108,11 @@ export default function MainTabs() {
           component={CatalogScreen}
           options={{ title: "Katalog Sampah" }}
         />
+        <Stack.Screen
+        name="TukarPoint"
+        component={TukarPointScreen}
+        options={{ title: "Tukar Poin" }}
+      />
       </Stack.Navigator>
     </SelectedItemsProvider>
   );

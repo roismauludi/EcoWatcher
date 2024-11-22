@@ -102,6 +102,14 @@ function Dashboard() {
       <View style={styles.blogSection}>
         <Text style={styles.blogSectionTitle}>Artikel Terbaru</Text>
         {/* Konten blog lainnya */}
+        <View style={styles.container}>
+          <Text style={styles.title}>Edukasi Pengelolaan Sampah</Text>
+          <Text style={styles.text}>
+            1. Pisahkan sampah organik dan anorganik.{'\n'}
+            2. Gunakan kembali barang-barang yang masih bisa didaur ulang.{'\n'}
+            3. Kurangi penggunaan plastik sekali pakai.
+          </Text>
+        </View>
       </View>
     </ScrollView>
   );
@@ -162,6 +170,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 10,
   },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  text: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
 });
 
-export default Dashboard; // Hanya ada satu ekspor default
+export default Dashboard;
