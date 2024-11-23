@@ -15,6 +15,8 @@ import CatalogScreen from "../screens/CatalogScreen"; // Import CatalogScreen
 import PickUpScreen from "../screens/PickUpScreen";
 import DropPointScreen from "../screens/DropPointScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import PenyetoranScreen from "../screens/PenyetoranScreen";
+import PickupScreen from "../screens/PickUpScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -105,6 +107,17 @@ export default function MainTabs() {
           name="Catalog"
           component={CatalogScreen}
           options={{ title: "Katalog Sampah" }}
+        />
+
+        <Stack.Screen
+          name="Penyetoran"
+          component={PenyetoranScreen}
+          options={{ title: "Penyetoran" }}
+        />
+        <Stack.Screen
+          name="PickUp"
+          component={PickupScreen}
+          options={{ title: "Pick Up" }}
         />
       </Stack.Navigator>
     </SelectedItemsProvider>

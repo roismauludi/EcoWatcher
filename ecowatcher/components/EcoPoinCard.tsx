@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
   exchangeButton: {
     marginTop: 12,
     backgroundColor: "#5EDB7E", // Hijau lembut sesuai desain
-    borderRadius: 20, // Border yang lebih bulat sesuai desain
+    borderRadius: 10, // Border yang lebih bulat sesuai desain
     flexDirection: "row", // Agar teks dan icon dalam satu baris
     alignItems: "center",
     justifyContent: "center",

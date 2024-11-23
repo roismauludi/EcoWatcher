@@ -96,10 +96,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#4CAF50",
-    paddingVertical: 20,
+    paddingVertical: 30,
     paddingHorizontal: 10,
-    borderBottomLeftRadius: 20,
-    borderBottomRightRadius: 20,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     marginBottom: 20,
   },
   profileContainer: {
