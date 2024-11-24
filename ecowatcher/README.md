@@ -9,7 +9,7 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npm install
    npm install firebase
-   npm install firebase-admin ( untuk backend )
+   npm install @react-native-firebase/auth
    npm install @react-native-async-storage/async-storage
    npx expo install expo-crypto
    npm install express cors body-parser
