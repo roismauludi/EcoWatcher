@@ -15,6 +15,8 @@ import CatalogScreen from "../screens/CatalogScreen"; // Import CatalogScreen
 import PickUpScreen from "../screens/PickUpScreen";
 import DropPointScreen from "../screens/DropPointScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import PickupScreen from "../screens/PickUpScreen";
+import PenyetoranScreen from "../screens/PenyetoranScreen";
 import TukarPointScreen from "../screens/TukarPointScreen";
 
 const Tab = createBottomTabNavigator();
@@ -34,7 +36,6 @@ function BottomTabs() {
                 size={size}
                 color={color}
               />
-              
             );
           } else if (route.name === "Tong") {
             return (
@@ -45,7 +46,6 @@ function BottomTabs() {
               />
             );
           } else if (route.name === "Riwayat") {
-            // Menggunakan FontAwesome5 untuk ikon Riwayat
             return (
               <FontAwesome5
                 name="history"
@@ -79,11 +79,11 @@ function BottomTabs() {
 }
 
 // Main navigator with stack for advanced navigation
+
 export default function MainTabs() {
   return (
     <SelectedItemsProvider>
       <Stack.Navigator initialRouteName="Login">
-        {/* Login and Register Screens */}
         <Stack.Screen
           name="Login"
           component={LoginScreen}
@@ -94,25 +94,33 @@ export default function MainTabs() {
           component={RegisterScreen}
           options={{ title: "Register" }}
         />
-
-        {/* Main Tab Navigator */}
         <Stack.Screen
           name="MainTabs"
-          component={BottomTabs}
+          component={BottomTabs} // Pastikan ini adalah komponen yang benar
           options={{ headerShown: false }}
         />
-
-        {/* Stack screen for Catalog navigation from Dashboard */}
-        <Stack.Screen
+         {/* Stack screen for Catalog navigation from Dashboard */}
+         <Stack.Screen
           name="Catalog"
           component={CatalogScreen}
           options={{ title: "Katalog Sampah" }}
         />
+
         <Stack.Screen
-        name="TukarPoint"
-        component={TukarPointScreen}
-        options={{ title: "Tukar Poin" }}
-      />
+          name="Penyetoran"
+          component={PenyetoranScreen}
+          options={{ title: "Penyetoran" }}
+        />
+        <Stack.Screen
+          name="PickUp"
+          component={PickupScreen}
+          options={{ title: "Pick Up" }}
+        />
+        <Stack.Screen
+          name="TukarPoint"
+          component={TukarPointScreen}
+          options={{ title: "Tukar Poin" }}
+        />
       </Stack.Navigator>
     </SelectedItemsProvider>
   );

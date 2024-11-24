@@ -9,13 +9,18 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    ```bash
    npm install
    npm install firebase
+   npm install firebase-admin ( untuk backend )
+   npm install @react-native-async-storage/async-storage
    npx expo install expo-crypto
+   npm install express cors body-parser
+   npm install tailwindcss nativewind
    ```
 
 2. Start the app
 
    ```bash
     npx expo start
+    node server.js ( jalanin server )
    ```
 
 In the output, you'll find options to open the app in a

@@ -9,10 +9,17 @@ import {
 } from "react-native";
 import { Checkbox } from "expo-checkbox";
 import { useSelectedItems } from "../(tabs)/context/SelectedItemsContext"; // Pastikan path ini sesuai
+import { useNavigation } from "@react-navigation/native";
+import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../types";
+
+type RootParamList = {
+  Penyetoran: undefined;
+};
 
 export default function TongScreen() {
   const { selectedItems, setSelectedItems } = useSelectedItems(); // Menggunakan context
-
+  const navigation = useNavigation<NativeStackNavigationProp<RootParamList>>();
   // Dummy items
   const dummyItems = [
     {
@@ -20,7 +27,7 @@ export default function TongScreen() {
       title: "Botol Kaca",
       points: "1500 Poin / Kg",
       type: "Non-Organik Kaca",
-      image: require("../../assets/images/botol-kaca.png"),
+      image: require("../../assets/images/botol_kaca.png"),
     },
     {
       id: "2",
@@ -112,7 +119,10 @@ export default function TongScreen() {
           <Text style={styles.itemCount}>
             {selectedItems.length} Jenis Sampah
           </Text>
-          <TouchableOpacity style={styles.submitButton}>
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={() => navigation.navigate("Penyetoran")}
+          >
             <Text style={styles.submitButtonText}>Setorkan</Text>
           </TouchableOpacity>
         </View>

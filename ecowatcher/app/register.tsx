@@ -1,10 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';  // Pastikan ini diimport
-import { auth, db } from '../firebaseConfig';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
-import * as Crypto from 'expo-crypto';
+import CONFIG from './config';
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState('');
@@ -23,43 +20,38 @@ const RegisterScreen = () => {
     }
 
     try {
-      const digest = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        password
-      );
-      
-      // Mendaftar pengguna dengan Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, email, digest);
-
-      // Menyimpan data pengguna ke Firestore
-      await setDoc(doc(db, 'users', userCredential.user.uid), {
-        email,
-        nama,
-        jenisBank,
-        namaRekening,
-        noRekening,
-        level: 'penyumbang',
-        point: 0,
-        totalpointmasuk: 0,
-        totalpointkeluar: 0,
-        password: digest,
-        foto: require('../assets/images/default.jpg'),
+      const response = await fetch(`${CONFIG.API_URL}/api/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          nama,
+          jenisBank,
+          namaRekening,
+          noRekening,
+        }),
       });
 
-      // Tampilkan alert dan arahkan ke halaman login
-      Alert.alert('Registrasi berhasil!', '', [
-        {
-          text: 'OK',
-          onPress: () => {
-            console.log('Navigasi ke halaman login dipanggil');
-            router.replace('/login'); // Pastikan ini sesuai dengan path Login.tsx Anda
+      if (response.ok) {
+        Alert.alert('Registrasi berhasil!', '', [
+          {
+            text: 'OK',
+            onPress: () => {
+              console.log('Navigasi ke halaman login dipanggil');
+              router.replace('/login'); // Pastikan rute ini sesuai dengan rute halaman login
+            },
           },
-        },
-      ]);
-
-    } catch (error: unknown) {
-      const errorMessage = (error instanceof Error) ? error.message : 'Terjadi kesalahan';
-      Alert.alert('Gagal mendaftarkan pengguna', errorMessage);
+        ]);
+      } else {
+        const errorMessage = await response.text();
+        Alert.alert('Gagal mendaftarkan pengguna', errorMessage);
+      }
+    } catch (error) {
+      console.error('Gagal mendaftarkan pengguna:', error);
+      Alert.alert('Gagal mendaftarkan pengguna', 'Terjadi kesalahan saat menghubungi server');
     }
   };
 

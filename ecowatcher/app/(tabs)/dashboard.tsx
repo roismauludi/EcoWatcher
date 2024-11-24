@@ -1,3 +1,4 @@
+// ecowatcher/app/(tabs)/dashboard.tsx
 import React, { useState, useEffect } from "react";
 import {
   ScrollView,
@@ -18,6 +19,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import EcoPoinCard from "../../components/EcoPoinCard";
 import ActionSection from "../../components/ActionSection";
 
+// Impor gambar default
+const defaultPhoto = require('../../assets/images/default.jpg'); // Gambar default
+
+// Buat objek untuk memetakan nama file ke gambar
+const imageMap: { [key: string]: any } = {
+  'default.jpg': defaultPhoto,
+  // Tambahkan gambar lain yang mungkin Anda miliki
+  // 'user1.jpg': require('../../assets/images/user1.jpg'),
+  // 'user2.jpg': require('../../assets/images/user2.jpg'),
+};
+
 const { width } = Dimensions.get("window");
 
 type DashboardScreenNavigationProp = StackNavigationProp<
@@ -27,14 +39,14 @@ type DashboardScreenNavigationProp = StackNavigationProp<
 
 interface UserData {
   nama: string;
-  foto: any; // Bisa berupa URL string atau require() untuk gambar default
+  foto: string; // Ubah tipe foto menjadi string
 }
 
 function Dashboard() {
   const navigation = useNavigation<DashboardScreenNavigationProp>();
   const [userData, setUserData] = useState<UserData>({
     nama: 'Pengguna',
-    foto: require('../../assets/images/default.jpg'), // Foto default
+    foto: defaultPhoto, // Foto default
   });
 
   useEffect(() => {
@@ -57,9 +69,15 @@ function Dashboard() {
       if (!querySnapshot.empty) {
         const userDoc = querySnapshot.docs[0];
         const data = userDoc.data() as UserData;
+        console.log('User data fetched:', data); // Debugging
+        console.log('User photo name:', data.foto); // Debugging
+
+        // Menentukan gambar berdasarkan nama file
+        const userPhoto = imageMap[data.foto] || defaultPhoto; // Gunakan gambar dari imageMap
+
         setUserData({
           nama: data.nama || 'Pengguna',
-          foto: data.foto || require('../../assets/images/default.jpg'),
+          foto: userPhoto, // Pastikan foto diambil dengan benar
         });
       } else {
         Alert.alert('Error', 'Data pengguna tidak ditemukan');
@@ -78,7 +96,7 @@ function Dashboard() {
       <View style={styles.header}>
         <View style={styles.profileContainer}>
           <Image
-            source={typeof userData.foto === 'string' ? { uri: userData.foto } : userData.foto}
+            source={typeof userData.foto === 'number' ? userData.foto : { uri: userData.foto }} // Pastikan foto ditampilkan dengan benar
             style={styles.profileImage}
           />
           <View style={styles.userInfo}>

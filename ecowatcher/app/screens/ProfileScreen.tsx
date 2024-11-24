@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ScrollView } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
+import { LinearGradient } from "expo-linear-gradient"; // Pastikan Anda mengimpor LinearGradient
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,7 +29,7 @@ interface UserData {
   namaRekening: string;
   jenisBank: string;
   level: string;
-  foto: any; // Ubah tipe foto menjadi any untuk mendukung require
+  foto: string; // Ubah tipe foto menjadi string
 }
 
 const ProfileScreen = () => {
@@ -41,7 +41,7 @@ const ProfileScreen = () => {
     namaRekening: '',
     jenisBank: '',
     level: '',
-    foto: require('../../assets/images/default.jpg'), // Foto default
+    foto: '', // Simpan sebagai string
   });
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const ProfileScreen = () => {
           namaRekening: data.namaRekening || '',
           jenisBank: data.jenisBank || '',
           level: data.level || '',
-          foto: data.foto || require('../../assets/images/default.jpg'), // Gunakan foto default jika tidak ada
+          foto: data.foto || '', // Simpan foto sebagai string
         });
       } else {
         console.log('No user data found'); // Debugging
@@ -104,16 +104,13 @@ const ProfileScreen = () => {
       {/* Header dengan gambar profil dan info pengguna */}
       <LinearGradient colors={["#2ECC71", "#27AE60"]} style={styles.header}>
         <View style={styles.profileContainer}>
-        <Image
-
-            source={{ uri: "https://via.placeholder.com/100" }}
-            style={styles.profileImage}
-          />
-          
           <Image
-            source={typeof userData.foto === 'string' ? { uri: userData.foto } : userData.foto} // Menggunakan foto dari data pengguna
+            source={userData.foto && userData.foto !== "default.jpg" ? { uri: userData.foto } : require('../../assets/images/default.jpg')} // Gunakan foto dari data pengguna atau gambar default
             style={styles.profileImage}
-            onError={() => setUserData((prev) => ({ ...prev, foto: require('../../assets/images/default.jpg') }))} // Jika ada error, gunakan foto default
+            onError={() => {
+              console.log('Error loading image, using default image'); // Debugging
+              setUserData((prev) => ({ ...prev, foto: require('../../assets/images/default.jpg') })); // Jika ada error, gunakan foto default
+            }}
           />
           <Text style={styles.profileName}>{userData.nama}</Text>
           <Text style={styles.profileEmail}>{userData.email}</Text>
@@ -134,7 +131,11 @@ const ProfileScreen = () => {
         </View>
         <View style={styles.infoItem}>
           <Text style={styles.infoLabel}>No. Rekening:</Text>
-          <Text style={styles.infoValue}>{userData.noRekening}</Text>
+            <Text style={styles.infoValue}>
+              {userData.noRekening.length > 3 
+              ? userData.noRekening.slice(0, -3) + '***' 
+              : '***'} {/* Menyembunyikan tiga digit terakhir */}
+        </Text>
         </View>
       </View>
 
@@ -193,7 +194,8 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     alignItems: "center",
-    position: 'relative', // Tambahkan ini untuk mengatur posisi relatif
+    position: 'relative',
+    marginTop: 40, // Tambahkan margin untuk menghindari tumpang tindih
   },
   profileImage: {
     width: 80,
@@ -201,29 +203,26 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     borderWidth: 3,
     borderColor: "white",
-    position: 'absolute', // Tambahkan ini untuk mengatur posisi absolut
-    top: 20, // Atur posisi vertikal sesuai kebutuhan
-    zIndex: 1, // Pastikan gambar berada di atas
+    marginBottom: 10, // Tambahkan margin bawah untuk memberi jarak
   },
   profileName: {
-    color: "white",
     fontSize: 20,
     fontWeight: "bold",
-    marginTop: 100, // Sesuaikan margin untuk menghindari tumpang tindih
+    color: "white", // Ubah warna teks menjadi putih agar terlihat di latar belakang hijau
   },
   profileEmail: {
-    color: "white",
     fontSize: 14,
     marginTop: 5,
+    color: "white", // Ubah warna teks menjadi putih agar terlihat di latar belakang hijau
   },
   profileLevel: {
-    color: "white",
     fontSize: 14,
     marginTop: 5,
     backgroundColor: "rgba(255,255,255,0.2)",
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 10,
+    color: "white", // Ubah warna teks menjadi putih agar terlihat di latar belakang hijau
   },
   sectionContainer: {
     backgroundColor: "white",

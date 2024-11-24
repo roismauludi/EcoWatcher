@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,98 +7,63 @@ import {
   StyleSheet,
   Alert,
   ActivityIndicator,
-} from 'react-native';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebaseConfig'; // Pastikan Anda mengimpor db untuk Firestore
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as Crypto from 'expo-crypto';
+} from "react-native";
+import { auth } from "../firebaseConfig"; // Pastikan Firebase Authentication diatur dengan benar
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
-// Definisikan tipe untuk routes
+// Tipe parameter untuk navigator
 type RootStackParamList = {
   Login: undefined;
   Register: undefined;
   MainTabs: undefined;
-  AdminDashboard: undefined;
 };
 
-// Definisikan tipe untuk navigation
+// Tipe navigasi
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp>();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Silakan isi email dan password');
+      Alert.alert("Error", "Silakan isi email dan password");
       return;
     }
-
+  
     setIsLoading(true);
     try {
-      // Hash password
-      const hashedPassword = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        password
-      );
-
-      // Cari user berdasarkan email
-      const usersRef = collection(db, 'users'); // Gunakan db untuk Firestore
-      const q = query(usersRef, where('email', '==', email));
-      const querySnapshot = await getDocs(q);
-
-      if (querySnapshot.empty) {
-        Alert.alert('Error', 'Email tidak ditemukan');
-        return;
-      }
-
-      const userDoc = querySnapshot.docs[0];
-      const userData = userDoc.data();
-
-      // Verifikasi password
-      if (userData.password !== hashedPassword) {
-        Alert.alert('Error', 'Password salah');
-        return;
-      }
-
+      // Login dengan Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+  
       // Simpan email ke AsyncStorage
-      await AsyncStorage.setItem('userEmail', email);
-      console.log('Email tersimpan:', email);
-
-      // Validasi level pengguna
-      if (userData.level !== 'penyumbang' && userData.level !== 'pengelola') {
-        Alert.alert('Akses Ditolak', 'Anda tidak memiliki akses ke aplikasi ini');
-        return;
+      await AsyncStorage.setItem("userEmail", email);
+      console.log("Email tersimpan:", email);
+  
+      // Pindah ke MainTabs
+      navigation.replace("MainTabs"); // Pastikan ini sesuai dengan nama rute yang didefinisikan
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        console.error("Login Error:", error.message);
+        Alert.alert("Error", "Gagal login: " + error.message);
+      } else {
+        console.error("Login Error:", error);
+        Alert.alert("Error", "Terjadi kesalahan saat login.");
       }
-
-      // Arahkan ke halaman yang sesuai
-      switch (userData.level) {
-        case 'pengelola':
-          navigation.replace('AdminDashboard');
-          break;
-        case 'penyumbang':
-          console.log('Navigating to MainTabs...');
-          navigation.replace('MainTabs');
-          break;
-        default:
-          Alert.alert('Error', 'Level pengguna tidak valid');
-      }
-    } catch (error) {
-      console.error('Login Error:', error);
-      Alert.alert('Error', 'Terjadi kesalahan saat login');
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>EcoWatcher</Text>
-      
+
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -107,7 +72,7 @@ const LoginScreen = () => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Password"
@@ -115,8 +80,8 @@ const LoginScreen = () => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.loginButton}
         onPress={handleLogin}
         disabled={isLoading}
@@ -127,10 +92,10 @@ const LoginScreen = () => {
           <Text style={styles.loginButtonText}>Masuk</Text>
         )}
       </TouchableOpacity>
-      
-      <TouchableOpacity 
+
+      <TouchableOpacity
         style={styles.registerButton}
-        onPress={() => navigation.navigate('Register')}
+        onPress={() => navigation.navigate("Register")}
         disabled={isLoading}
       >
         <Text style={styles.registerButtonText}>
@@ -145,41 +110,41 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#fff',
+    justifyContent: "center",
+    backgroundColor: "#fff",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 30,
-    textAlign: 'center',
+    textAlign: "center",
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
     padding: 15,
     marginBottom: 15,
     borderRadius: 8,
     fontSize: 16,
   },
   loginButton: {
-    backgroundColor: '#2ECC71',
+    backgroundColor: "#2ECC71",
     padding: 15,
     borderRadius: 8,
     marginTop: 10,
   },
   loginButtonText: {
-    color: '#fff',
-    textAlign: 'center',
+    color: "#fff",
+    textAlign: "center",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   registerButton: {
     marginTop: 20,
   },
   registerButtonText: {
-    color: '#2ECC71',
-    textAlign: 'center',
+    color: "#2ECC71",
+    textAlign: "center",
     fontSize: 16,
   },
 });
