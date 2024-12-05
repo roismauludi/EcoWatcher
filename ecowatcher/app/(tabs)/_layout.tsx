@@ -1,12 +1,14 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { NavigationContainer } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 import { FontAwesome5 } from "@expo/vector-icons";
 import { SelectedItemsProvider } from "../(tabs)/context/SelectedItemsContext"; // Pastikan path ini sesuai
 
-import LoginScreen from "../login";
-import RegisterScreen from "../register";
+import LoginScreen from "../auth/login";
+import RegisterScreen from "../auth/register";
 import DashboardScreen from "./dashboard"; // Your Dashboard Screen
 import TongScreen from "./TongSampah"; // Other screens
 import RiwayatScreen from "../screens/RiwayatScreen";
@@ -17,6 +19,11 @@ import DropPointScreen from "../screens/DropPointScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import PenyetoranScreen from "../screens/PenyetoranScreen";
 import PickupScreen from "../screens/PickUpScreen";
+import AddAddressScreen from "../screens/AddAddressScreen";
+import DijemputScreen from "../screens/DijemputScreen";
+import DitimbangScreen from "../screens/DitimbangScreen";
+import SelesaiScreen from "../screens/SelesaiScreen";
+import DibatalkanScreen from "../screens/DibatalkanScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -70,8 +77,16 @@ function BottomTabs() {
         tabBarInactiveTintColor: "gray", // Warna ikon saat tidak aktif
       })}
     >
-      <Tab.Screen name="Dashboard" component={DashboardScreen} />
-      <Tab.Screen name="Tong" component={TongScreen} />
+      <Tab.Screen
+        name="Dashboard"
+        options={{ headerShown: false }}
+        component={DashboardScreen}
+      />
+      <Tab.Screen
+        name="Tong"
+        options={{ headerShown: false }}
+        component={TongScreen}
+      />
       <Tab.Screen name="Riwayat" component={RiwayatScreen} />
       <Tab.Screen name="Profile" component={ProfileScreen} />
     </Tab.Navigator>
@@ -85,19 +100,20 @@ export default function MainTabs() {
       <Stack.Navigator initialRouteName="Login">
         {/* Login and Register Screens */}
         <Stack.Screen
-          name="Login"
-          component={LoginScreen}
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
           name="Register"
           component={RegisterScreen}
           options={{ title: "Register" }}
         />
 
+        <Stack.Screen
+          name="Login"
+          component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+
         {/* Main Tab Navigator */}
         <Stack.Screen
-          name="MainTabs"
+          name="Dashboard"
           component={BottomTabs}
           options={{ headerShown: false }}
         />
@@ -115,9 +131,34 @@ export default function MainTabs() {
           options={{ title: "Penyetoran" }}
         />
         <Stack.Screen
+          name="AddAddress"
+          component={AddAddressScreen}
+          options={{ title: "Tambah Alamat" }} // Header title
+        />
+        <Stack.Screen
           name="PickUp"
           component={PickupScreen}
           options={{ title: "Pick Up" }}
+        />
+        <Stack.Screen
+          name="Dijemput"
+          component={DijemputScreen}
+          options={{ title: "Dijemput" }}
+        />
+        <Stack.Screen
+          name="Ditimbang"
+          component={DitimbangScreen}
+          options={{ title: "Ditimbang" }}
+        />
+        <Stack.Screen
+          name="Selesai"
+          component={SelesaiScreen}
+          options={{ title: "Selesai" }}
+        />
+        <Stack.Screen
+          name="Dibatalkan"
+          component={DibatalkanScreen}
+          options={{ title: "Dibatalkan" }}
         />
       </Stack.Navigator>
     </SelectedItemsProvider>

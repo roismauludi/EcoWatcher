@@ -1,17 +1,33 @@
 import { AntDesign, Feather } from "@expo/vector-icons";
-import React from "react";
-import { View, Text, TouchableOpacity, Image, ScrollView } from "react-native";
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  Modal,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { Calendar } from "react-native-calendars";
 
 type RootStackParamList = {
   PickUp: undefined;
+  AddAddress: undefined;
   // ... tambahkan screen lain jika ada
 };
 
 export default function PenyetoranScreen() {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  // State untuk kontrol modal dan tanggal yang dipilih
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    "Jumat, 11 Agustus 2024"
+  );
+
   return (
     <ScrollView style={{ flex: 1, backgroundColor: "white" }}>
       {/* Header */}
@@ -40,9 +56,9 @@ export default function PenyetoranScreen() {
           <Text style={{ fontSize: 20, fontWeight: "bold", color: "black" }}>
             Alamat Penjemputan
           </Text>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate("AddAddress")}>
             <Text style={{ color: "#25c05d", fontWeight: "bold" }}>
-              Pilih Alamat Lain
+              Tambah Alamat
             </Text>
           </TouchableOpacity>
         </View>
@@ -232,9 +248,10 @@ export default function PenyetoranScreen() {
             borderRadius: 10,
             padding: 16,
           }}
+          onPress={() => setModalVisible(true)} // Buka modal kalender
         >
           <Text style={{ fontSize: 14, color: "black", flex: 1 }}>
-            Jumat, 22 Agustus 2024
+            {selectedDate}
           </Text>
           <AntDesign
             name="calendar"
@@ -247,6 +264,83 @@ export default function PenyetoranScreen() {
           Kurir akan menjemput sampah Anda pada pukul 15:00 WIB.
         </Text>
       </View>
+
+      {/* Modal Kalender */}
+      <Modal
+        visible={modalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: "white",
+              borderRadius: 10,
+              width: "90%",
+              padding: 16,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: "bold",
+                textAlign: "center",
+                marginBottom: 16,
+              }}
+            >
+              Agustus 2024
+            </Text>
+            <Calendar
+              onDayPress={(day: { dateString: string }) => {
+                const formattedDate = new Date(
+                  day.dateString
+                ).toLocaleDateString("id-ID", {
+                  weekday: "long",
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                });
+                setSelectedDate(formattedDate);
+                setModalVisible(false); // Tutup modal
+              }}
+              markedDates={{
+                "2024-08-11": { selected: true, selectedColor: "#25c05d" },
+              }}
+              theme={{
+                selectedDayBackgroundColor: "#25c05d",
+                selectedDayTextColor: "#ffffff",
+                todayTextColor: "#25c05d",
+                arrowColor: "#25c05d",
+              }}
+            />
+            <TouchableOpacity
+              onPress={() => setModalVisible(false)}
+              style={{
+                marginTop: 16,
+                backgroundColor: "#25c05d",
+                padding: 12,
+                borderRadius: 10,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{ color: "white", fontWeight: "bold", fontSize: 16 }}
+              >
+                Lanjut
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {/* Button Konfirmasi */}
       <View style={{ padding: 16 }}>
         <TouchableOpacity

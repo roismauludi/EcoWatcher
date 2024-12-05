@@ -1,21 +1,29 @@
+// app/auth/register.tsx
+
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert } from "react-native";
-import { useRouter } from "expo-router";
-import { auth, db } from "../firebaseConfig"; // Pastikan firebaseConfig sudah dikonfigurasi dengan db
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  Alert,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
+import { useRouter } from "expo-router"; // Pastikan ini diimport
+import { auth, db } from "../../firebaseConfig"; // Menambahkan db ke import yang ada
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore"; // Import Firestore
-import { doc, setDoc } from "firebase/firestore"; // Tambahkan setDoc di sini
-import * as Crypto from "expo-crypto";
+import { setDoc, doc } from "firebase/firestore";
 
 const RegisterScreen = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [jenisBank, setJenisBank] = useState("");
   const [nama, setNama] = useState("");
+  const [jenisBank, setJenisBank] = useState("");
   const [namaRekening, setNamaRekening] = useState("");
   const [noRekening, setNoRekening] = useState("");
-  const router = useRouter();
+  const router = useRouter(); // Gunakan useRouter dari expo-router
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -24,31 +32,37 @@ const RegisterScreen = () => {
     }
 
     try {
-      const digest = await Crypto.digestStringAsync(
-        Crypto.CryptoDigestAlgorithm.SHA256,
-        password
-      );
       // Mendaftar pengguna dengan Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(
         auth,
         email,
-        digest
+        password
       );
 
-      // Menyimpan data pengguna ke Firestore setelah registrasi sukses
+      // Menyimpan data pengguna ke Firestore
       await setDoc(doc(db, "users", userCredential.user.uid), {
         email,
         nama,
         jenisBank,
         namaRekening,
         noRekening,
-        level: "penyumbang", // Level otomatis diatur ke "penyumbang"
-        point: 0, // Set default point ke 0
-        password: digest, // Simpan password (harap pertimbangkan hashing password)
+        level: "penyumbang",
+        point: 0,
+        totalpointmasuk: 0,
+        totalpointkeluar: 0,
+        foto: require("../../assets/images/default.jpg"),
       });
 
-      Alert.alert("Registrasi berhasil!");
-      router.push("/"); // Arahkan kembali ke halaman login
+      // Tampilkan alert dan arahkan ke halaman login
+      Alert.alert("Registrasi berhasil!", "", [
+        {
+          text: "OK",
+          onPress: () => {
+            // Arahkan ke halaman login setelah registrasi sukses
+            router.replace("/auth/login");
+          },
+        },
+      ]);
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : "Terjadi kesalahan";
@@ -57,68 +71,83 @@ const RegisterScreen = () => {
   };
 
   return (
-    <View style={{ padding: 16 }}>
-      <Text>Email:</Text>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Text style={styles.title}>Daftar Akun</Text>
+      {/* Form inputan */}
       <TextInput
         value={email}
         onChangeText={setEmail}
         placeholder="Masukkan email"
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      <Text>Nama:</Text>
       <TextInput
         value={nama}
         onChangeText={setNama}
         placeholder="Masukkan nama"
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
       />
-      <Text>Jenis Bank:</Text>
       <TextInput
         value={jenisBank}
         onChangeText={setJenisBank}
         placeholder="Masukkan jenis bank"
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
       />
-      <Text>Nama Rekening:</Text>
       <TextInput
         value={namaRekening}
         onChangeText={setNamaRekening}
         placeholder="Masukkan nama rekening"
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
       />
-      <Text>No Rekening:</Text>
       <TextInput
         value={noRekening}
         onChangeText={setNoRekening}
         placeholder="Masukkan nomor rekening"
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
         keyboardType="numeric"
       />
-      <Text>Password:</Text>
       <TextInput
         value={password}
         onChangeText={setPassword}
         placeholder="Masukkan password"
         secureTextEntry
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
       />
-      <Text>Konfirmasi Password:</Text>
       <TextInput
         value={confirmPassword}
         onChangeText={setConfirmPassword}
         placeholder="Konfirmasi password"
         secureTextEntry
-        style={{ borderWidth: 1, marginBottom: 12 }}
+        style={styles.input}
       />
-      <Button title="Register" onPress={handleRegister} />
-      <Button
-        title="Sudah punya akun? Login"
-        onPress={() => router.push("/")}
-      />
-    </View>
+      <Button title="Register" onPress={handleRegister} color="#2ECC71" />
+    </ScrollView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flexGrow: 1,
+    padding: 16,
+    backgroundColor: "#f9f9f9",
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "bold",
+    marginBottom: 20,
+    textAlign: "center",
+    color: "#2ECC71",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ddd",
+    padding: 15,
+    marginBottom: 12,
+    borderRadius: 8,
+    fontSize: 16,
+    backgroundColor: "#fff",
+  },
+});
 
 export default RegisterScreen;
