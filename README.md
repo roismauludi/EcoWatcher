@@ -1,3 +1,4 @@
+silahkan mengambil ip config terlebih dahulu pada cmd dengan cara ipconfig, dan ambil IPv4 address kemudian salin dan letakkan pada bagian app/config.ts
 
 ## Get started
 
