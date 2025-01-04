@@ -11,4 +11,5 @@
    ```bash
     npx expo start atau npm run android
     node server.js ( setelah masuk ke folder ecowatcher masuk lagi ke folder backend untuk mobile ( jalanin server ) )
+    npm run dec ( untuk menjalankan web )
    ```
